@@ -1,73 +1,171 @@
-#!/usr/bin/python3
-
-import os
-import joblib
-import re
-import sys
-
-sys.path.append( "../tools/" )
-from parse_out_email_text import parseOutText
-
-"""
-    Starter code to process the emails from Sara and Chris to extract
-    the features and get the documents ready for classification.
-
-    The list of all the emails from Sara are in the from_sara list
-    likewise for emails from Chris (from_chris)
-
-    The actual documents are in the Enron email dataset, which
-    you downloaded/unpacked in Part 0 of the first mini-project. If you have
-    not obtained the Enron email corpus, run startup.py in the tools folder.
-
-    The data is stored in lists and packed away in pickle files at the end.
-"""
-
-
-from_sara  = open("from_sara.txt", "r")
-from_chris = open("from_chris.txt", "r")
-
-from_data = []
-word_data = []
-
-### temp_counter is a way to speed up the development--there are
-### thousands of emails from Sara and Chris, so running over all of them
-### can take a long time
-### temp_counter helps you only look at the first 200 emails in the list so you
-### can iterate your modifications quicker
-temp_counter = 0
-
-
-for name, from_person in [("sara", from_sara), ("chris", from_chris)]:
-    for path in from_person:
-        ### only look at first 200 emails when developing
-        ### once everything is working, remove this line to run over full dataset
-        temp_counter += 1
-        if temp_counter < 200:
-	        path = os.path.join('..', path[:-1])
-	        print(path)
-	        email = open(path, "r")
-
-	        ### use parseOutText to extract the text from the opened email
-
-
-	        ### use str.replace() to remove any instances of the words
-	        ### ["sara", "shackleton", "chris", "germani"]
-
-
-	        ### append the text to word_data
-
-
-	        ### append a 0 to from_data if email is from Sara, and 1 if email is from Chris
-
-
-	        email.close()
-
-print("Emails Processed")
-from_sara.close()
-from_chris.close()
-
-joblib.dump( word_data, open("your_word_data.pkl", "wb") )
-joblib.dump( from_data, open("your_email_authors.pkl", "wb") )
-
-
-### in Part 4, do TfIdf vectorization here
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 32,
+   "id": "9f51b316",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import joblib\n",
+    "import sys\n",
+    "import re\n",
+    "sys.path.append( \"../tools/\" )\n",
+    "from parse_out_email_text import parseOutText"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 33,
+   "id": "48050811",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from_sara  = open(\"from_sara.txt\", \"r\")\n",
+    "from_chris = open(\"from_chris.txt\", \"r\")\n",
+    "\n",
+    "from_data = []\n",
+    "word_data = []"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 34,
+   "id": "a90659a0",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "emails processed\n",
+      "tjonesnsf stephani and sam need nymex calendar\n"
+     ]
+    }
+   ],
+   "source": [
+    "for name, from_person in [(\"sara\", from_sara), (\"chris\", from_chris)]:\n",
+    "    for path in from_person:\n",
+    "        path = \"../tools/\" + path[:-1]\n",
+    "        email = open(path, \"r\")\n",
+    "\n",
+    "        ### use parseOutText to extract the text from the opened email\n",
+    "        words = parseOutText(email)\n",
+    "\n",
+    "        list_rep  = [\"sara\", \"shackleton\", \"chris\", \"germani\"]\n",
+    "        for e in list_rep:\n",
+    "            words = words.replace(e,\"\")\n",
+    "            \n",
+    "        ### append the text to word_data\n",
+    "        word_data.append(words.replace('\\n', ' ').strip())\n",
+    "        \n",
+    "        ### append a 0 to from_data if email is from Sara, and 1 if email is from Chris\n",
+    "        from_data.append(0 if name == \"sara\" else 1)\n",
+    "\n",
+    "        email.close()\n",
+    "\n",
+    "print(\"emails processed\")\n",
+    "from_sara.close()\n",
+    "from_chris.close()\n",
+    "\n",
+    "joblib.dump( word_data, open(\"your_word_data.pkl\", \"wb\") )\n",
+    "joblib.dump( from_data, open(\"your_email_authors.pkl\", \"wb\") )\n",
+    "\n",
+    "print(word_data[152])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 35,
+   "id": "40d6bfc2",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "17578\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(len(word_data))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 36,
+   "id": "64d9cd51",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "38757\n"
+     ]
+    }
+   ],
+   "source": [
+    "from nltk.corpus import stopwords\n",
+    "from sklearn.feature_extraction.text import TfidfVectorizer\n",
+    "\n",
+    "sw = stopwords.words(\"english\")\n",
+    "vectorizer = TfidfVectorizer(stop_words=\"english\",lowercase=True)\n",
+    "vectorizer.fit_transform(word_data)\n",
+    "\n",
+    "print(len(vectorizer.get_feature_names()))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 37,
+   "id": "3d3aee0b",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "'stephaniethank'"
+      ]
+     },
+     "execution_count": 37,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "vectorizer.get_feature_names()[34597]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "4558434e",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.8.10"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
